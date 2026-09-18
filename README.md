@@ -76,3 +76,12 @@ SQLMesh's transaction semantics; it is not a globally atomic multi-model operati
 See `TEST_REPORT.md` and `reports/` for actual test executions. The HamiltonFlow
 integration and the SQLMeshFlow integration are separate: this package does not
 need Hamilton to run. Both use the same complete MetricFlow compiler source.
+
+## Tested Data Vault → configurable metrics sample
+
+See [the runnable cross-framework sample](examples/vault_metrics_sample/README.md)
+and its [measured results](examples/vault_metrics_sample/RESULTS.md). It compares
+HamiltonVault with SQLMeshVault, then HamiltonFlow with SQLMeshFlow, exercising
+configuration changes, incremental histories, replay, rejected historical rewrites
+and empty metric results. Keep the three repositories as sibling checkouts and run
+`python examples/vault_metrics_sample/run_sample.py --output build/vault-metrics-demo`.

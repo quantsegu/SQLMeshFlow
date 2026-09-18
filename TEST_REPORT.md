@@ -2,7 +2,7 @@
 
 | Suite | Passed | Failed |
 |---|---:|---:|
-| SQLMeshFlow integration | 5 | 0 |
+| SQLMeshFlow integration | 6 | 0 |
 | SQLMesh audit, dialect, schema-diff and date suites | 355 | 0 |
 
 The integration executes native SQLMesh plans and materializes actual MetricFlow
@@ -29,3 +29,7 @@ cloud service, dbt end-to-end, slow/performance and complete cross-platform matr
 were not validated. Tests ran on macOS ARM64 with Python 3.11 and local DuckDB.
 Deprecation warnings remain in upstream dependencies. No upstream code was changed
 to suppress failures. GitHub CI runs the new integration tests and source verification.
+
+The configurable vault-to-metrics sample exposed pandas NaN values leaking from
+SQL NULL aggregates. The runtime now preserves NULL as Python None / JSON null.
+A regression verifies empty aggregates, strict JSON serialization and replay.

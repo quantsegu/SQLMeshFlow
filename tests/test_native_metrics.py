@@ -84,3 +84,36 @@ def test_sqlmesh_models_include_native_metricflow_sql(project):
     assert "JOIN" in sql and "SUM" in sql
     manifest = json.loads((project / "manifest.json").read_text())
     assert manifest["compiler"] == "metricflow"
+
+
+def test_empty_aggregate_preserves_sql_nulls(tmp_path):
+    source = tmp_path / "source"
+    shutil.copytree(ROOT / "examples", source)
+    spec = json.loads((source / "project.json").read_text())
+    spec["queries"] = {
+        "metrics.empty": {
+            "metric_names": [
+                "revenue",
+                "orders",
+                "average_order_value",
+                "revenue_after_fee",
+            ],
+            "where_constraints": ["{{ Dimension('order__status') }} = 'missing'"],
+        }
+    }
+    spec["tests"] = {}
+    (source / "project.json").write_text(json.dumps(spec))
+    project = tmp_path / "empty"
+    build(source / "project.json", project)
+    result = apply(project)
+    expected = [
+        {
+            "revenue": None,
+            "orders": 0,
+            "average_order_value": None,
+            "revenue_after_fee": None,
+        }
+    ]
+    assert result["models"]["metrics.empty"] == expected
+    assert json.loads(json.dumps(result, allow_nan=False)) == result
+    assert apply(project)["models"]["metrics.empty"] == expected

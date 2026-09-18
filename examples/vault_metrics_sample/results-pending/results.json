@@ -1,0 +1,98 @@
+{
+  "vault": {
+    "initial": {
+      "counts": {
+        "hub_customer": 3,
+        "hub_order": 4,
+        "link_customer_order": 4,
+        "sat_customer": 3,
+        "sat_order": 4
+      },
+      "row_parity": true,
+      "replay_unchanged": true
+    },
+    "incremental": {
+      "counts": {
+        "hub_customer": 3,
+        "hub_order": 4,
+        "link_customer_order": 4,
+        "sat_customer": 4,
+        "sat_order": 6
+      },
+      "row_parity": true,
+      "replay_unchanged": true
+    },
+    "rejected_hamilton": "sat_customer: late-arriving change requires explicit reconciliation",
+    "rejected_sqlmesh": "crm: source history cannot delete or modify previously ingested events"
+  },
+  "metrics": {
+    "baseline": {
+      "fee_rate": 0.1,
+      "expected": {
+        "metrics.overview": [
+          {
+            "revenue": 50.0,
+            "orders": 1,
+            "average_order_value": 50.0,
+            "revenue_after_fee": 45.0
+          }
+        ],
+        "metrics.by_country": [
+          {
+            "customer__country": "CH",
+            "revenue": 50.0,
+            "orders": 1,
+            "average_order_value": 50.0,
+            "revenue_after_fee": 45.0
+          }
+        ]
+      },
+      "hamilton_matches": true,
+      "sqlmesh_matches": true,
+      "native_model_tests": 2
+    },
+    "config_changed": {
+      "fee_rate": 0.2,
+      "expected": {
+        "metrics.overview": [
+          {
+            "revenue": 50.0,
+            "orders": 1,
+            "average_order_value": 50.0,
+            "revenue_after_fee": 40.0
+          }
+        ],
+        "metrics.by_country": [
+          {
+            "customer__country": "CH",
+            "revenue": 50.0,
+            "orders": 1,
+            "average_order_value": 50.0,
+            "revenue_after_fee": 40.0
+          }
+        ]
+      },
+      "hamilton_matches": true,
+      "sqlmesh_matches": true,
+      "native_model_tests": 2
+    },
+    "incremental": {
+      "fee_rate": 0.2,
+      "expected": {
+        "metrics.overview": [
+          {
+            "revenue": null,
+            "orders": 0,
+            "average_order_value": null,
+            "revenue_after_fee": null
+          }
+        ],
+        "metrics.by_country": []
+      },
+      "hamilton_matches": true,
+      "sqlmesh_matches": true,
+      "native_model_tests": 2
+    }
+  },
+  "status": "passed"
+}

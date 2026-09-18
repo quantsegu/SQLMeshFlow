@@ -26,10 +26,15 @@ def apply(path: str | Path, execution_time: str = "2026-01-06T00:00:00Z") -> dic
         if result.is_failure:
             raise RuntimeError("SQLMesh run failed")
         manifest = json.loads((path / "manifest.json").read_text())
-        tables = {
-            name: context.fetchdf(f"SELECT * FROM {name}").to_dict(orient="records")
-            for name in manifest["models"]
-        }
+        tables = {}
+        for name in manifest["models"]:
+            frame = context.fetchdf(f"SELECT * FROM {name}")
+            # Nullable SQL aggregates must remain JSON null, not pandas NaN/NaT.
+            tables[name] = (
+                frame.astype(object)
+                .where(frame.notna(), None)
+                .to_dict(orient="records")
+            )
         return {"status": "success", "models": tables, "model_tests": tests.testsRun}
     finally:
         context.close()

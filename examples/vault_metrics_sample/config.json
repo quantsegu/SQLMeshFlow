@@ -1,0 +1,10 @@
+{
+  "name": "sales_demo",
+  "fee_rate": 0.1,
+  "changed_fee_rate": 0.2,
+  "included_status": "paid",
+  "execution_times": [
+    "2026-01-05T00:00:00Z",
+    "2026-01-07T00:00:00Z"
+  ]
+}
