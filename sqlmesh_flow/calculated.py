@@ -208,6 +208,10 @@ def validate_source(config: dict, database: Path) -> None:
 
 def build(config_path: str | Path, output: str | Path) -> dict:
     """Generate a MetricFlow semantic model and native SQLMesh direct-vault project."""
+    if "warehouse" in json.loads(Path(config_path).read_text()):
+        from .remote_metric import build as build_remote
+
+        return build_remote(config_path, output)
     config, database = read_config(config_path)
     validate_source(config, database)
     output = Path(output).resolve()

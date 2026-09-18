@@ -103,3 +103,7 @@ The calculated-metric configuration also accepts `target.database`, `target.sche
 [the complete target example](examples/calculated_vault_metric/metric-target.json).
 Results are persisted by SQLMesh and exposed through stable views at the configured
 names; the source vault stays read-only.
+
+## Warehouse adapters
+
+See [WAREHOUSES.md](WAREHOUSES.md) for Databricks, Snowflake, and ClickHouse configuration, target placement, offline validation, and execution limitations.

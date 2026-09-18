@@ -13,6 +13,10 @@ def apply(path: str | Path, execution_time: str = "2026-01-06T00:00:00Z") -> dic
 
         config, database = read_config(path / "metric.json")
         validate_source(config, database)
+    if (path / "remote_metric.json").exists():
+        from .remote_metric import preflight
+
+        preflight(path)
     context = Context(paths=path)
     try:
         tests = context.test()
