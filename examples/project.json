@@ -1,0 +1,182 @@
+{
+  "semantic_directory": "semantic",
+  "sources": {
+    "main.orders": {
+      "path": "orders.csv",
+      "columns": {
+        "order_id": "BIGINT",
+        "customer_id": "BIGINT",
+        "ordered_at": "TIMESTAMP",
+        "amount": "DOUBLE",
+        "status": "VARCHAR"
+      }
+    },
+    "main.customers": {
+      "path": "customers.csv",
+      "columns": {
+        "customer_id": "BIGINT",
+        "country": "VARCHAR"
+      }
+    },
+    "main.time_spine": {
+      "path": "time_spine.csv",
+      "columns": {
+        "date_day": "DATE"
+      }
+    }
+  },
+  "queries": {
+    "metrics.by_country": {
+      "metric_names": [
+        "revenue",
+        "orders",
+        "average_order_value"
+      ],
+      "group_by_names": [
+        "customer__country"
+      ],
+      "order_by_names": [
+        "customer__country"
+      ]
+    },
+    "metrics.running": {
+      "metric_names": [
+        "running_revenue"
+      ],
+      "group_by_names": [
+        "metric_time__day"
+      ],
+      "order_by_names": [
+        "metric_time__day"
+      ]
+    },
+    "metrics.overview": {
+      "metric_names": [
+        "revenue",
+        "buyers",
+        "revenue_after_fee"
+      ]
+    }
+  },
+  "tests": {
+    "test_joined_metric_values": {
+      "model": "metrics.by_country",
+      "inputs": {
+        "main.orders": {
+          "rows": [
+            {
+              "order_id": 1,
+              "customer_id": 10,
+              "ordered_at": "2026-01-01",
+              "amount": 100,
+              "status": "paid"
+            },
+            {
+              "order_id": 2,
+              "customer_id": 10,
+              "ordered_at": "2026-01-02",
+              "amount": 50,
+              "status": "paid"
+            },
+            {
+              "order_id": 3,
+              "customer_id": 20,
+              "ordered_at": "2026-01-02",
+              "amount": 200,
+              "status": "paid"
+            },
+            {
+              "order_id": 4,
+              "customer_id": 30,
+              "ordered_at": "2026-01-03",
+              "amount": 0,
+              "status": "cancelled"
+            }
+          ]
+        },
+        "main.customers": {
+          "rows": [
+            {
+              "customer_id": 10,
+              "country": "CH"
+            },
+            {
+              "customer_id": 20,
+              "country": "DE"
+            },
+            {
+              "customer_id": 30,
+              "country": "CH"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "query": {
+          "rows": [
+            {
+              "customer__country": "CH",
+              "revenue": 150,
+              "orders": 3,
+              "average_order_value": 50
+            },
+            {
+              "customer__country": "DE",
+              "revenue": 200,
+              "orders": 1,
+              "average_order_value": 200
+            }
+          ]
+        }
+      }
+    },
+    "test_overview_values": {
+      "model": "metrics.overview",
+      "inputs": {
+        "main.orders": {
+          "rows": [
+            {
+              "order_id": 1,
+              "customer_id": 10,
+              "ordered_at": "2026-01-01",
+              "amount": 100,
+              "status": "paid"
+            },
+            {
+              "order_id": 2,
+              "customer_id": 10,
+              "ordered_at": "2026-01-02",
+              "amount": 50,
+              "status": "paid"
+            },
+            {
+              "order_id": 3,
+              "customer_id": 20,
+              "ordered_at": "2026-01-02",
+              "amount": 200,
+              "status": "paid"
+            },
+            {
+              "order_id": 4,
+              "customer_id": 30,
+              "ordered_at": "2026-01-03",
+              "amount": 0,
+              "status": "cancelled"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "query": {
+          "rows": [
+            {
+              "revenue": 350,
+              "buyers": 3,
+              "revenue_after_fee": 315
+            }
+          ]
+        }
+      }
+    }
+  }
+}

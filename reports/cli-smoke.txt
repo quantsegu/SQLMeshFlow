@@ -1,0 +1,9 @@
+usage: sqlmesh-flow [-h] {build,apply} ...
+
+MetricFlow compiler and SQLMesh execution
+
+positional arguments:
+  {build,apply}
+
+options:
+  -h, --help     show this help message and exit
