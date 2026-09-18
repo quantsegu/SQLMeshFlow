@@ -8,6 +8,11 @@ from sqlmesh import Context
 
 def apply(path: str | Path, execution_time: str = "2026-01-06T00:00:00Z") -> dict:
     path = Path(path).resolve()
+    if (path / "metric.json").exists():
+        from .calculated import read_config, validate_source
+
+        config, database = read_config(path / "metric.json")
+        validate_source(config, database)
     context = Context(paths=path)
     try:
         tests = context.test()

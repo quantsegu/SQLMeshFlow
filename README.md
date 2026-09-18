@@ -85,3 +85,15 @@ HamiltonVault with SQLMeshVault, then HamiltonFlow with SQLMeshFlow, exercising
 configuration changes, incremental histories, replay, rejected historical rewrites
 and empty metric results. Keep the three repositories as sibling checkouts and run
 `python examples/vault_metrics_sample/run_sample.py --output build/vault-metrics-demo`.
+
+## Calculations over vault columns
+
+Use `build-calculated` to define a metric in JSON with a source vault table, typed
+columns, a scalar calculation, aggregation and grouping. The builder selects the
+latest satellite row per key and compiles the expression through MetricFlow into
+native SQLMesh models. The source database is attached read-only.
+
+See [the calculated vault metric example](examples/calculated_vault_metric/README.md)
+and its [configuration](examples/calculated_vault_metric/metric.json):
+`SUM(QUANTITY * UNIT_PRICE * (1 - COALESCE(DISCOUNT_RATE, 0)))` returns 510 through
+both HamiltonFlow and SQLMeshFlow on the shipped vault history.

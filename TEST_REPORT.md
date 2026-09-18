@@ -2,7 +2,7 @@
 
 | Suite | Passed | Failed |
 |---|---:|---:|
-| SQLMeshFlow integration | 6 | 0 |
+| SQLMeshFlow integration | 15 | 0 |
 | SQLMesh audit, dialect, schema-diff and date suites | 355 | 0 |
 
 The integration executes native SQLMesh plans and materializes actual MetricFlow
@@ -33,3 +33,11 @@ to suppress failures. GitHub CI runs the new integration tests and source verifi
 The configurable vault-to-metrics sample exposed pandas NaN values leaking from
 SQL NULL aggregates. The runtime now preserves NULL as Python None / JSON null.
 A regression verifies empty aggregates, strict JSON serialization and replay.
+
+Nine additional calculated-metric tests verify multiple-column arithmetic over a
+read-only vault relation, catalog-qualified vault views, latest history, source
+file immutability, replay, refresh after new events, formula-only configuration
+changes, invalid expressions, ambiguous history and explicit safe division.
+The complete suite passed 15 tests. The actual SQLMeshVault-generated sample was
+also queried through both engines; both returned 510 (CH 350, DE 160), matching
+an independent Decimal calculation. See `examples/calculated_vault_metric/results.json`.

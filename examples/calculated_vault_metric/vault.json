@@ -1,0 +1,74 @@
+{
+  "version": 2,
+  "name": "calculated_metric_vault",
+  "hashing": {
+    "algorithm": "MD5",
+    "storage": "binary"
+  },
+  "stages": {
+    "orders": {
+      "path": "orders.csv",
+      "columns": [
+        "ORDER_ID",
+        "QUANTITY",
+        "UNIT_PRICE",
+        "DISCOUNT_RATE",
+        "REGION",
+        "INGESTED_AT",
+        "EFFECTIVE_AT"
+      ],
+      "derived_columns": {
+        "LOAD_DTS": {
+          "column": "INGESTED_AT"
+        },
+        "RECORD_SOURCE": {
+          "literal": "SALES"
+        }
+      },
+      "hashed_columns": {
+        "ORDER_HK": {
+          "columns": "ORDER_ID"
+        },
+        "ORDER_HASHDIFF": {
+          "columns": [
+            "QUANTITY",
+            "UNIT_PRICE",
+            "DISCOUNT_RATE",
+            "REGION"
+          ],
+          "is_hashdiff": true
+        }
+      }
+    }
+  },
+  "models": [
+    {
+      "name": "hub_order",
+      "kind": "hub",
+      "source_model": "orders",
+      "src_pk": "ORDER_HK",
+      "src_nk": [
+        "ORDER_ID"
+      ],
+      "src_ldts": "LOAD_DTS",
+      "src_source": "RECORD_SOURCE"
+    },
+    {
+      "name": "sat_order",
+      "kind": "sat",
+      "source_model": "orders",
+      "src_pk": "ORDER_HK",
+      "src_hashdiff": "ORDER_HASHDIFF",
+      "src_payload": [
+        "QUANTITY",
+        "UNIT_PRICE",
+        "DISCOUNT_RATE",
+        "REGION"
+      ],
+      "src_eff": "EFFECTIVE_AT",
+      "parent": "hub_order",
+      "src_ldts": "LOAD_DTS",
+      "src_source": "RECORD_SOURCE"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "calculation": "SUM(QUANTITY * UNIT_PRICE * (1 - COALESCE(DISCOUNT_RATE, 0)))",
+  "independent_decimal_expected": "510.00",
+  "hamilton": {
+    "metrics.net_sales": [
+      [
+        510.0
+      ]
+    ],
+    "metrics.net_sales_by_group": [
+      [
+        "CH",
+        350.0
+      ],
+      [
+        "DE",
+        160.0
+      ]
+    ]
+  },
+  "sqlmesh": {
+    "metrics.net_sales": [
+      {
+        "net_sales": 510.0
+      }
+    ],
+    "metrics.net_sales_by_group": [
+      {
+        "vault_order__region": "CH",
+        "net_sales": 350.0
+      },
+      {
+        "vault_order__region": "DE",
+        "net_sales": 160.0
+      }
+    ]
+  },
+  "source_unchanged": true,
+  "tests_passed": 15
+}
