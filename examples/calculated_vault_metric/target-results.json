@@ -1,0 +1,41 @@
+{
+  "status": "success",
+  "models": {
+    "finance.sales_total": [
+      {
+        "net_sales": 510.0
+      }
+    ],
+    "finance.sales_by_region": [
+      {
+        "vault_order__region": "CH",
+        "net_sales": 350.0
+      },
+      {
+        "vault_order__region": "DE",
+        "net_sales": 160.0
+      }
+    ]
+  },
+  "model_tests": 0,
+  "target": {
+    "database": "build/published/analytics.duckdb",
+    "schema": "finance",
+    "table": "sales_total",
+    "grouped_table": "sales_by_region"
+  },
+  "published_relations": [
+    [
+      "finance",
+      "sales_by_region",
+      "VIEW"
+    ],
+    [
+      "finance",
+      "sales_total",
+      "VIEW"
+    ]
+  ],
+  "source_unchanged": true,
+  "database_path_resolution": "relative to metric-target.json"
+}

@@ -97,3 +97,9 @@ See [the calculated vault metric example](examples/calculated_vault_metric/READM
 and its [configuration](examples/calculated_vault_metric/metric.json):
 `SUM(QUANTITY * UNIT_PRICE * (1 - COALESCE(DISCOUNT_RATE, 0)))` returns 510 through
 both HamiltonFlow and SQLMeshFlow on the shipped vault history.
+
+The calculated-metric configuration also accepts `target.database`, `target.schema`,
+`target.table` and `target.grouped_table`. See
+[the complete target example](examples/calculated_vault_metric/metric-target.json).
+Results are persisted by SQLMesh and exposed through stable views at the configured
+names; the source vault stays read-only.

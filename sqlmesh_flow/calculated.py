@@ -74,8 +74,13 @@ def scalar_expression(expression: str, columns: dict) -> str:
 def read_config(path: str | Path) -> tuple[dict, Path]:
     path = Path(path).resolve()
     config = json.loads(path.read_text())
-    if set(config) != {"source", "metric", "group_by"}:
-        raise ValueError("Expected source, metric and group_by configuration fields")
+    if not {"source", "metric", "group_by"} <= set(config) or set(config) - {
+        "source",
+        "metric",
+        "group_by",
+        "target",
+    }:
+        raise ValueError("Expected source, metric, group_by and optional target fields")
     source, metric = config["source"], config["metric"]
     if set(source) != {
         "database",
@@ -140,8 +145,29 @@ def read_config(path: str | Path) -> tuple[dict, Path]:
             "Source database paths containing single quotes are unsupported"
         )
     name(database.stem)
-    if database.stem == "metric_store":
-        raise ValueError("Source catalog conflicts with the metric_store destination")
+    target = config.get("target", {})
+    if not isinstance(target, dict) or set(target) - {
+        "database",
+        "schema",
+        "table",
+        "grouped_table",
+    }:
+        raise ValueError("Invalid target configuration fields")
+    for field in ["schema", "table", "grouped_table"]:
+        if field in target:
+            name(target[field])
+    if "database" in target:
+        if not isinstance(target["database"], str) or not target["database"].strip():
+            raise ValueError("target.database must be a non-empty file path")
+        destination = (path.parent / target["database"]).resolve()
+        if "'" in str(destination) or destination.is_dir():
+            raise ValueError("Unsupported target database path")
+        name(destination.stem)
+        if destination == database or destination.stem.lower() == database.stem.lower():
+            raise ValueError(
+                "Target and source must use different files and catalog names"
+            )
+        target["database"] = str(destination)
     return config, database
 
 
@@ -188,6 +214,30 @@ def build(config_path: str | Path, output: str | Path) -> dict:
     if output.exists():
         raise ValueError("Output already exists; choose a new project directory")
     source, metric = config["source"], config["metric"]
+    target = {
+        "database": str(output / "metric_store.duckdb"),
+        "schema": "metrics",
+        "table": metric["name"],
+        **config.get("target", {}),
+    }
+    target.setdefault("grouped_table", target["table"] + "_by_group")
+    destination = Path(target["database"])
+    if destination == database or destination.stem.lower() == database.stem.lower():
+        raise ValueError("Target and source must use different files and catalog names")
+    relations = [target["schema"] + "." + target["table"]]
+    if config["group_by"]:
+        relations.append(target["schema"] + "." + target["grouped_table"])
+    normalized = [r.lower() for r in relations]
+    if len(set(normalized)) != len(normalized) or set(normalized) & {
+        "mart.current_orders",
+        "mart.time_spine",
+    }:
+        raise ValueError(
+            "Target relations must be distinct and cannot replace helper models"
+        )
+    if target["schema"].lower().startswith("sqlmesh"):
+        raise ValueError("Target schema is reserved for SQLMesh internal state")
+    config["target"] = target
     expression = scalar_expression(metric["calculation"], source["columns"])
     documents = [
         {
@@ -255,10 +305,10 @@ def build(config_path: str | Path, output: str | Path) -> dict:
         str(output / "semantic")
     ).semantic_manifest
     SemanticManifestValidator[PydanticSemanticManifest]().checked_validations(manifest)
-    queries = {"metrics." + metric["name"]: {"metric_names": [metric["name"]]}}
+    queries = {relations[0]: {"metric_names": [metric["name"]]}}
     if config["group_by"]:
         groups = ["vault_order__" + c.lower() for c in config["group_by"]]
-        queries["metrics." + metric["name"] + "_by_group"] = {
+        queries[relations[1]] = {
             "metric_names": [metric["name"]],
             "group_by_names": groups,
             "order_by_names": groups,
@@ -307,11 +357,14 @@ from pathlib import Path
 from sqlmesh.core.config import Config, GatewayConfig, DuckDBConnectionConfig, ModelDefaultsConfig
 from sqlmesh.core.config.connection import DuckDBAttachOptions
 root = Path(__file__).parent
-source = json.loads((root / 'metric.json').read_text())['source']
+settings = json.loads((root / 'metric.json').read_text())
+source, target = settings['source'], settings['target']
+destination = Path(target['database'])
+destination.parent.mkdir(parents=True, exist_ok=True)
 config = Config(
     gateways={'local': GatewayConfig(connection=DuckDBConnectionConfig(
         concurrent_tasks=1,
-        catalogs={'metric_store': str(root / 'metric_store.duckdb'), Path(source['database']).stem: DuckDBAttachOptions(type='duckdb', path=source['database'], read_only=True)}))},
+        catalogs={destination.stem: str(destination), Path(source['database']).stem: DuckDBAttachOptions(type='duckdb', path=source['database'], read_only=True)}))},
     default_gateway='local', model_defaults=ModelDefaultsConfig(dialect='duckdb', start='2026-01-01'),
 )
 """)
@@ -321,6 +374,7 @@ config = Config(
         "models": models,
         "calculation": expression,
         "source": source["table"],
+        "target": target,
     }
     (output / "manifest.json").write_text(json.dumps(result, indent=2) + "\n")
     return result

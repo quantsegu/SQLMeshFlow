@@ -1,0 +1,32 @@
+{
+  "source": {
+    "database": "build/vault/warehouse.duckdb",
+    "table": "vault.sat_order",
+    "business_key": "ORDER_HK",
+    "load_timestamp": "LOAD_DTS",
+    "time_column": "EFFECTIVE_AT",
+    "columns": {
+      "ORDER_HK": "BLOB",
+      "LOAD_DTS": "TIMESTAMPTZ",
+      "EFFECTIVE_AT": "TIMESTAMPTZ",
+      "QUANTITY": "DOUBLE",
+      "UNIT_PRICE": "DOUBLE",
+      "DISCOUNT_RATE": "DOUBLE",
+      "REGION": "VARCHAR"
+    }
+  },
+  "metric": {
+    "name": "net_sales",
+    "calculation": "QUANTITY * UNIT_PRICE * (1 - COALESCE(DISCOUNT_RATE, 0))",
+    "aggregation": "sum"
+  },
+  "group_by": [
+    "REGION"
+  ],
+  "target": {
+    "database": "build/published/analytics.duckdb",
+    "schema": "finance",
+    "table": "sales_total",
+    "grouped_table": "sales_by_region"
+  }
+}

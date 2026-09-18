@@ -40,6 +40,9 @@ def apply(path: str | Path, execution_time: str = "2026-01-06T00:00:00Z") -> dic
                 .where(frame.notna(), None)
                 .to_dict(orient="records")
             )
-        return {"status": "success", "models": tables, "model_tests": tests.testsRun}
+        report = {"status": "success", "models": tables, "model_tests": tests.testsRun}
+        if "target" in manifest:
+            report["target"] = manifest["target"]
+        return report
     finally:
         context.close()

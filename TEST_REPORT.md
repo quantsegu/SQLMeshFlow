@@ -2,7 +2,7 @@
 
 | Suite | Passed | Failed |
 |---|---:|---:|
-| SQLMeshFlow integration | 15 | 0 |
+| SQLMeshFlow integration | 24 | 0 |
 | SQLMesh audit, dialect, schema-diff and date suites | 355 | 0 |
 
 The integration executes native SQLMesh plans and materializes actual MetricFlow
@@ -41,3 +41,10 @@ changes, invalid expressions, ambiguous history and explicit safe division.
 The complete suite passed 15 tests. The actual SQLMeshVault-generated sample was
 also queried through both engines; both returned 510 (CH 350, DE 160), matching
 an independent Decimal calculation. See `examples/calculated_vault_metric/results.json`.
+
+Nine target tests cover a separately configured database file, automatic schema
+creation, total/grouped relation names, direct reads after execution, refresh from
+510 to 600 after a new source event, and rejection of invalid/conflicting target
+names and paths. The full integration suite passed 24 tests. The real sample
+published 510 to `finance.sales_total` and CH 350 / DE 160 to
+`finance.sales_by_region`; its source file checksum was unchanged.

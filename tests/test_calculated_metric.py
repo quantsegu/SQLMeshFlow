@@ -104,3 +104,66 @@ def test_explicit_safe_division():
         "QUANTITY / NULLIF(UNIT_PRICE, 0)",
         {"QUANTITY": "DOUBLE", "UNIT_PRICE": "DOUBLE"},
     )
+
+
+def test_configured_target_database_schema_tables_and_refresh(config_path, tmp_path):
+    config = json.loads(config_path.read_text())
+    config["target"] = {
+        "database": "published/analytics.duckdb",
+        "schema": "finance",
+        "table": "sales_total",
+        "grouped_table": "sales_by_region",
+    }
+    config_path.write_text(json.dumps(config))
+    project = tmp_path / "configured"
+    built = build(config_path, project)
+    target = tmp_path / "published/analytics.duckdb"
+    assert built["target"]["database"] == str(target)
+    first = apply(project, "2026-01-08T00:00:00Z")
+    assert first["models"]["finance.sales_total"] == [{"net_sales": 510.0}]
+    assert first["target"] == built["target"]
+    assert not (project / "metric_store.duckdb").exists()
+    with duckdb.connect(str(target), read_only=True) as db:
+        assert db.execute("SELECT net_sales FROM finance.sales_total").fetchall() == [
+            (510.0,)
+        ]
+        assert db.execute(
+            "SELECT * FROM finance.sales_by_region ORDER BY vault_order__region"
+        ).fetchall() == [("CH", 350.0), ("DE", 160.0)]
+        assert (
+            db.execute(
+                "SELECT count(*) FROM information_schema.tables WHERE table_schema='finance'"
+            ).fetchone()[0]
+            == 2
+        )
+    with duckdb.connect(config["source"]["database"]) as db:
+        db.execute(
+            "INSERT INTO vault.history VALUES ('a', '2026-01-09', '2026-01-01', '4', '100', '.1', 'CH')"
+        )
+    apply(project, "2026-01-10T00:00:00Z")
+    with duckdb.connect(str(target), read_only=True) as db:
+        assert db.execute("SELECT net_sales FROM finance.sales_total").fetchall() == [
+            (600.0,)
+        ]
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        {"schema": "bad; DROP SCHEMA vault"},
+        {"table": "bad.name"},
+        {"table": "duplicate", "grouped_table": "duplicate"},
+        {"schema": "mart", "table": "current_orders"},
+        {"schema": "sqlmesh"},
+        {"database": "source.duckdb"},
+        {"database": "other/source.duckdb"},
+        {"mode": "append"},
+    ],
+)
+def test_invalid_or_conflicting_target_rejected(config_path, tmp_path, target):
+    config = json.loads(config_path.read_text())
+    config["target"] = target
+    config_path.write_text(json.dumps(config))
+    with pytest.raises(ValueError):
+        build(config_path, tmp_path / "invalid-target")
+    assert not (tmp_path / "invalid-target").exists()
